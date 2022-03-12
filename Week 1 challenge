@@ -1,0 +1,120 @@
+-- CREATE A DATABASE
+create database qhibodProject
+
+-- CREATE A SCHEMA
+create schema DannyRestaurant
+
+-- CREATE A TABLE CALLED MEMBERS
+create table DannyRestaurant.Members(
+				     customer_id varchar(1),
+                                    join_date timestamp)
+		
+	-- CREATE A TABLE CALLED SALES
+create table DannyRestaurant.Sales(customer_id varchar(1),
+                                    order_date date,
+                                    Product_id INT)
+	
+    -- CREATE A TABLE CALLED MENU
+create table DannyRestaurant.menu( Product_id int,
+				product_name varchar(5),
+				Price INT)
+
+-- INSERT DATA INTO SALES TABLE
+Insert into DannyRestaurant.Sales VALUES
+		('A', '2021-01-01',1),
+	   ('A','2021-01-01',2),
+	   ('A','2021-01-07',2),
+	   ('A','2021-01-10',3),
+	   ('A','2021-01-11',3),
+	   ('A','2021-01-11',3),
+	   ('B','2021-01-01',2),
+	   ('B','2021-01-02',2),
+	   ('B','2021-01-04',1),
+	   ('B','2021-01-11',1),
+	   ('B','2021-01-16',3),
+	   ('B','2021-02-01',3),
+	   ('C','2021-01-01',3),
+	   ('C','2021-01-01',3),
+	   ('C','2021-01-07',3);
+       
+ -- insert into MENU table
+Insert into DannyRestaurant.menu VALUES
+		(1,'sushi',10),
+	   (2,'curry',15),
+	   (3,'ramen',12);
+    
+    -- insert into MEMBER table
+    INSERT INTO DannyRestaurant.members
+VALUES ('A','2021-01-07'),
+	   ('B','2021-01-09');
+
+-- What is the total Amount each customer spent at the restaurant
+
+select s.customer_id, sum(m.price) as total_expenses
+from sales as s
+left join menu as m
+on s.product_id=m.product_id
+group by s.customer_id;
+
+-- How many days has each customer visited the restaurant
+
+select s.customer_id, count(distinct(order_date)) as total_days
+from sales as s
+group by s.customer_id;
+
+-- what was the first item from the menu purchased by each customer
+	select s.customer_id, s.order_date,m.product_name as first_purchases
+    from (select s.customer_id, min(s.order_date)
+					from sales as s
+			) as ss
+		 join sales as s
+        join menu as m
+		on s.product_id=m.product_id
+        group by customer_id;
+        
+        -- Or we use CTE
+        with first as (select s.customer_id, min(s.order_date)
+					from sales as s)
+		select s.customer_id,m.product_name as first_purchases
+        from first -- the cte
+        join sales as s
+        join menu as m
+        using(product_id)
+        group by customer_id
+        having min(s.order_date)
+        ;
+        
+-- 4 What is the most purchased item on the menu and how many times was it purchased by all customers
+
+select m.product_name as most_purcased, count(s.product_id) as times_purchsed
+from (select count(s.product_id)
+				from sales as s
+		) as opoor
+
+join menu as m
+join sales as s
+using(product_id)
+group by s.product_id
+order by s.Product_id desc
+limit 1;
+
+ -- OR 
+select m.product_name as most_purchased, count(s.product_id) as times_purcased
+from sales as s
+join menu as m
+using (product_id)
+group by s.product_id
+order by times_purcased desc
+limit 1;
+
+-- 5 Which item was the most popular for each customer
+
+select s.customer_id, m.product_name
+from 
+(select max(s.Product_id)
+from sales as s
+) as most_pop
+join sales as s
+join menu as m
+group by s.customer_id
+order by max(s.Product_id) desc;
